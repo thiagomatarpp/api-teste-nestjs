@@ -1,51 +1,73 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdatePutUserDto } from './dto/update-put-user.dto';
-import { UpdatePatchUserDto } from './dto/update-patch-user.dto';
+import {Injectable, NotFoundException} from '@nestjs/common';
+import {PrismaService} from '../prisma/prisma.service';
+import {CreateUserDto} from './dto/create-user.dto';
+import {UpdatePutUserDto} from './dto/update-put-user.dto';
+import {UpdatePatchUserDto} from './dto/update-patch-user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
-
-  async create(data: CreateUserDto) {
-    return this.prisma.users.create({
-      data,
-    });
-  }
-  async readOne(id: number) {
-    const response = await this.prisma.users.findUnique({
-      where: { id },
-    });
-    if (!response) {
-      throw new NotFoundException(`User ${id} not found`);
+    constructor(private readonly prisma: PrismaService) {
     }
 
-    return response;
-  }
+    async create(data: CreateUserDto) {
+        data.password = await this.getPasswordHash(data.password);
+        return this.prisma.users.create({
+            data,
+        });
+    }
 
-  async read() {
-    return this.prisma.users.findMany();
-  }
+    async readOne(id: number) {
+        const response = await this.prisma.users.findUnique({
+            where: {id},
+        });
+        if (!response) {
+            throw new NotFoundException(`User ${id} not found`);
+        }
 
-  async delete(id) {
-    await this.readOne(id);
-    this.prisma.users.delete({ where: { id } });
-  }
+        return response;
+    }
 
-  async update(id, data: UpdatePutUserDto) {
-    await this.readOne(id);
-    return this.prisma.users.update({
-      data,
-      where: { id },
-    });
-  }
+    async read() {
+        return this.prisma.users.findMany();
+    }
 
-  async patch(id, data: UpdatePatchUserDto) {
-    await this.readOne(id);
-    return this.prisma.users.update({
-      data,
-      where: { id },
-    });
-  }
+    async delete(id) {
+        await this.readOne(id);
+        this.prisma.users.delete({where: {id}});
+    }
+
+    async update(id, data: UpdatePutUserDto) {
+        await this.readOne(id);
+
+        const {password} = data;
+
+        if (password) {
+            data.password = await this.getPasswordHash(password);
+        }
+
+        return this.prisma.users.update({
+            data,
+            where: {id},
+        });
+    }
+
+    async patch(id, data: UpdatePatchUserDto) {
+        await this.readOne(id);
+
+        const {password} = data;
+
+        if (password) {
+            data.password = await this.getPasswordHash(password);
+        }
+
+        return this.prisma.users.update({
+            data,
+            where: {id},
+        });
+    }
+
+    private async getPasswordHash(password: string) {
+        return await bcrypt.hash(password, await bcrypt.genSalt());
+    }
 }
