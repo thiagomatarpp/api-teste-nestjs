@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import {forwardRef, Module} from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import {AuthController} from "./auth.controller";
 import {PrismaModule} from "../prisma/prisma.module";
@@ -11,9 +11,10 @@ import {AuthService} from "./auth.service";
       secret: 'ExiuWwVeudVJ778zmWnrar97gMzcF3jv',
     }),
       PrismaModule,
-      UserModule,
+      forwardRef(() => UserModule),
   ],
   controllers: [AuthController],
-  providers: [AuthService]
+  providers: [AuthService],
+  exports: [AuthService]
 })
 export class AuthModule {}
