@@ -1,7 +1,7 @@
-import {IsString, MinLength} from "class-validator";
+import {IsEmail, MinLength} from "class-validator";
 
 export class AuthForgetDto {
-    @IsString()
+    @IsEmail()
     @MinLength(6)
     email: string;
 }

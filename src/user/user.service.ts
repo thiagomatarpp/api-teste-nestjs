@@ -67,7 +67,7 @@ export class UserService {
         });
     }
 
-    private async getPasswordHash(password: string) {
+    public async getPasswordHash(password: string) {
         return await bcrypt.hash(password, await bcrypt.genSalt());
     }
 }
